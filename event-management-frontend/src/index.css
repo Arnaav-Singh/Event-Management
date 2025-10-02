@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fb;
+  color: #111827;
+}
+
+/* Utility helpers */
+.container {
+  max-width: 1200px;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.card-header {
+  padding: 1rem 1rem 0.5rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
+  border: 1px solid transparent;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-outline {
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #111827;
+}
+
+.btn-outline:hover {
+  border-color: #d1d5db;
+}

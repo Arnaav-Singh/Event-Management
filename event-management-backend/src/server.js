@@ -1,0 +1,121 @@
+// src/server.js
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import connectDB from "./config/db.js";
+import morgan from "morgan";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
+import { notFound, errorHandler } from "./middleware/errorHandler.js";
+
+import authRoutes from "./routes/authRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import coordinatorRoutes from "./routes/coordinatorRoutes.js";
+import attenderRoutes from "./routes/attenderRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
+import feedbackRoutes from "./routes/feedbackRoutes.js";
+import superadminRoutes from "./routes/superadminRoutes.js";
+import facultyRoutes from './routes/facultyRoutes.js';
+import googleAuthRoutes from './routes/googleAuthRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
+
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 5050;
+
+// If running behind a proxy (Render, Vercel, Nginx, etc.), enable correct IP detection for rate-limit
+app.set("trust proxy", 1); // safe in dev/prod and recommended for accurate client IPs [8]
+
+// Connect to DB
+connectDB();
+
+// Strict CORS config for Vite dev server
+const corsOptions = {
+  origin: "http://localhost:5173", // exact origin needed when credentials are true [9][10]
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// Global CORS must be first so even errors carry CORS headers
+app.use(cors(corsOptions));
+
+// Explicitly handle preflight for all routes early
+// app.options("*", cors(corsOptions)); // REMOVED: this causes path-to-regexp error
+
+// Short-circuit any remaining OPTIONS before other middleware that might block
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+// Body/parse
+app.use(express.json({ limit: "100kb" }));
+app.use(cookieParser());
+
+// Logging
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+// Security
+app.use(helmet());           // sets various security headers [3]
+// Custom sanitize to avoid Express 5 readonly req.query reassignment
+function sanitizeKeys(obj) {
+  if (!obj || typeof obj !== 'object') return;
+  for (const key of Object.keys(obj)) {
+    if (key.startsWith('$') || key.includes('.')) {
+      const safeKey = key.replaceAll('$', '').replaceAll('.', '_');
+      obj[safeKey] = obj[key];
+      delete obj[key];
+    } else if (typeof obj[key] === 'object') {
+      sanitizeKeys(obj[key]);
+    }
+  }
+}
+app.use((req, _res, next) => {
+  try {
+    if (req.body && typeof req.body === 'object') sanitizeKeys(req.body);
+    if (req.params && typeof req.params === 'object') sanitizeKeys(req.params);
+    // NOTE: avoid reassigning req.query due to Express 5 read-only getter
+  } catch (_) {}
+  next();
+});
+
+// Rate limit sensitive routes (avoid applying to OPTIONS)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Routes
+app.use("/api/auth", (req, res, next) => {
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  return authLimiter(req, res, next);
+}, authRoutes);
+
+app.use('/api/superadmin', superadminRoutes);
+// Remove or comment out any app.get('*', ...) or router.use('*', ...)
+
+app.use('/api/admin', adminRoutes);
+app.use('/api/coordinators', coordinatorRoutes);
+app.use('/api/attenders', attenderRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/notification', notificationRoutes);
+app.use('/api/faculty', facultyRoutes);
+app.use('/api/google', googleAuthRoutes);
+
+// SPA or 404 fallback LAST
+// ...existing code...
+
+
+// 404 and error handler (keep after routes)
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
