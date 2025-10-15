@@ -1,11 +1,5 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-// @ts-expect-error AppRouter is a JSX component, but TypeScript doesn't know that because it's a .jsx file.
-import AppRouter from './router/AppRouter';
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <AppRouter />
-  </React.StrictMode>
-);
+createRoot(document.getElementById("root")!).render(<App />);

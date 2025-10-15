@@ -30,9 +30,20 @@ app.set("trust proxy", 1); // safe in dev/prod and recommended for accurate clie
 // Connect to DB
 connectDB();
 
-// Strict CORS config for Vite dev server
+// Strict CORS config for Vite dev server (support 5173 and 5174)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+];
+
 const corsOptions = {
-  origin: "http://localhost:5173", // exact origin needed when credentials are true [9][10]
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // allow non-browser and same-origin
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],

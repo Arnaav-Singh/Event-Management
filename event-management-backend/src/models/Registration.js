@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 
 const registrationSchema = new mongoose.Schema({
-  regID: { type: String, required: true, unique: true },
+  regID: { type: String, unique: true, default: function() { return this._id.toString(); } },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   event: { type: mongoose.Schema.Types.ObjectId, ref: 'Event', required: true },
   status: {
