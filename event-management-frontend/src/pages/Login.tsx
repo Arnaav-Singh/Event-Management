@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, LogIn } from 'lucide-react';
+import { Calendar, LogIn, UserPlus } from 'lucide-react';
 
 export default function Login() {
   const { user, login } = useAuth();
@@ -40,9 +40,7 @@ export default function Login() {
   };
 
   const demoAccounts = [
-    { email: 'admin@test.com', password: 'admin123', role: 'Admin' },
-    { email: 'coord@test.com', password: 'coord123', role: 'Coordinator' },
-    { email: 'student1@test.com', password: 'student123', role: 'Student' },
+    
   ];
 
   const fillDemo = (email: string, password: string) => {
@@ -114,27 +112,20 @@ export default function Login() {
           </CardContent>
         </Card>
 
+        
+
         <Card className="bg-gradient-card shadow-card border-0">
-          <CardHeader>
-            <CardTitle className="text-sm">Demo Accounts</CardTitle>
-            <CardDescription className="text-xs">
-              Click to auto-fill credentials
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-2">
-              {demoAccounts.map((account) => (
-                <Button
-                  key={account.email}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fillDemo(account.email, account.password)}
-                  className="justify-start text-xs"
-                >
-                  <span className="font-medium">{account.role}:</span>
-                  <span className="text-muted-foreground ml-1">{account.email}</span>
-                </Button>
-              ))}
+          <CardContent className="pt-6">
+            <div className="text-center space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Don't have an account?
+              </p>
+              <Button asChild variant="outline" className="w-full gap-2">
+                <Link to="/signup">
+                  <UserPlus className="w-4 h-4" />
+                  Create Account
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

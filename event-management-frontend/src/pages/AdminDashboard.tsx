@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
 import { Button } from '@/components/ui/button';
@@ -28,15 +28,12 @@ export default function AdminDashboard() {
     description: '',
     date: '',
     location: '',
-    assigned_coordinator: ''
+    assigned_coordinator: '',
+    google_form_url: ''
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [eventsData, coordinatorsData, statsData] = await Promise.all([
         apiService.getEvents(),
@@ -53,7 +50,11 @@ export default function AdminDashboard() {
         variant: "destructive"
       });
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +62,7 @@ export default function AdminDashboard() {
     try {
       const event = await apiService.createEvent(newEvent);
       setEvents([event, ...events]);
-      setNewEvent({ title: '', description: '', date: '', location: '', assigned_coordinator: '' });
+      setNewEvent({ title: '', description: '', date: '', location: '', assigned_coordinator: '', google_form_url: '' });
       setIsCreating(false);
       
       toast({
@@ -161,6 +162,19 @@ export default function AdminDashboard() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="googleFormUrl">Google Form URL (Optional)</Label>
+                  <Input
+                    id="googleFormUrl"
+                    type="url"
+                    value={newEvent.google_form_url}
+                    onChange={(e) => setNewEvent({ ...newEvent, google_form_url: e.target.value })}
+                    placeholder="https://docs.google.com/forms/d/..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Add a Google Form URL to generate QR codes for attendee feedback and registration
+                  </p>
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button type="submit" className="flex-1">Create Event</Button>

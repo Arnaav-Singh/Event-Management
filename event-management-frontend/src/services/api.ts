@@ -1,9 +1,9 @@
 // API service layer that simulates MongoDB REST endpoints
 // In production, these would be actual HTTP calls to your MongoDB + Express backend
 
-import { User, Event, Attendance, Feedback, AuthUser } from '@/types';
+import { User, Event, Attendance, Feedback, AuthUser, BackendUser, BackendEvent, BackendFeedback, BackendAuthResponse, BackendStatsResponse } from '@/types';
 
-const API_BASE_URL = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5050';
+const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL || 'http://localhost:5050';
 
 function getAuthToken(): string | null {
 	return localStorage.getItem('auth_token');
@@ -28,7 +28,9 @@ async function http<T>(path: string, options: RequestInit = {}): Promise<T> {
 		try {
 			const data = await res.json();
 			message = data?.message || message;
-		} catch (_) {}
+		} catch {
+			// Ignore JSON parsing errors
+		}
 		throw new Error(message);
 	}
 	// Attempt JSON, allow empty
@@ -50,7 +52,7 @@ function mapRoleToBackend(role: User['role']): string {
 	return role;
 }
 
-function mapUser(bu: any): User {
+function mapUser(bu: BackendUser): User {
 	return {
 		id: bu._id || bu.id || bu.userID,
 		name: bu.name,
@@ -60,7 +62,7 @@ function mapUser(bu: any): User {
 	};
 }
 
-function mapEvent(be: any): Event {
+function mapEvent(be: BackendEvent): Event {
 	return {
 		id: be._id || be.id || be.eventID,
 		title: be.title || be.name,
@@ -71,6 +73,7 @@ function mapEvent(be: any): Event {
 			? (typeof be.coordinators[0] === 'string' ? be.coordinators[0] : be.coordinators[0]?._id)
 			: '',
 		qr_code: be.qr_code,
+		google_form_url: be.google_form_url,
 		created_at: be.createdAt || new Date().toISOString(),
 	};
 }
@@ -78,7 +81,7 @@ function mapEvent(be: any): Event {
 class APIService {
 	// Authentication
 	async login(email: string, password: string): Promise<AuthUser> {
-		const data = await http<any>('/api/auth/login', {
+		const data = await http<BackendAuthResponse>('/api/auth/login', {
 			method: 'POST',
 			body: JSON.stringify({ email, password }),
 		});
@@ -94,7 +97,7 @@ class APIService {
 			password: userData.password,
 			role: mapRoleToBackend(userData.role),
 		};
-		const data = await http<any>('/api/auth/register', {
+		const data = await http<BackendAuthResponse>('/api/auth/register', {
 			method: 'POST',
 			body: JSON.stringify(payload),
 		});
@@ -105,7 +108,7 @@ class APIService {
 
 	// Users
 	async getUsers(): Promise<User[]> {
-		const data = await http<any[]>('/api/admin/users', { headers: { ...authHeaders() } });
+		const data = await http<BackendUser[]>('/api/admin/users', { headers: { ...authHeaders() } });
 		return data.map(mapUser);
 	}
 
@@ -121,12 +124,12 @@ class APIService {
 
 	// Events
 	async getEvents(): Promise<Event[]> {
-		const data = await http<any[]>('/api/events');
+		const data = await http<BackendEvent[]>('/api/events');
 		return data.map(mapEvent);
 	}
 
 	async getEventById(id: string): Promise<Event | null> {
-		const data = await http<any>(`/api/events/${id}`);
+		const data = await http<BackendEvent>(`/api/events/${id}`);
 		return mapEvent(data);
 	}
 
@@ -135,9 +138,9 @@ class APIService {
 		return all.filter(e => e.assigned_coordinator === coordinatorId || false);
 	}
 
-	async createEvent(eventData: { title: string; description: string; date: string; location: string; assigned_coordinator: string; }): Promise<Event> {
+	async createEvent(eventData: { title: string; description: string; date: string; location: string; assigned_coordinator: string; google_form_url?: string; }): Promise<Event> {
 		// Create event (admin/coordinator required depending on route)
-		const created = await http<any>('/api/events', {
+		const created = await http<BackendEvent>('/api/events', {
 			method: 'POST',
 			headers: { ...authHeaders() },
 			body: JSON.stringify({
@@ -145,30 +148,33 @@ class APIService {
 				description: eventData.description,
 				date: eventData.date,
 				location: eventData.location,
+				google_form_url: eventData.google_form_url,
 			}),
 		});
 		let ev = mapEvent(created);
 		// Assign coordinator if provided
 		if (eventData.assigned_coordinator) {
 			try {
-				const assigned = await http<any>(`/api/events/${ev.id}/assign`, {
+				const assigned = await http<BackendEvent>(`/api/events/${ev.id}/assign`, {
 					method: 'POST',
 					headers: { ...authHeaders() },
 					body: JSON.stringify({ coordinatorIds: [eventData.assigned_coordinator] }),
 				});
 				ev = mapEvent(assigned);
-			} catch (_) {}
+			} catch {
+			// Ignore JSON parsing errors
+		}
 		}
 		return ev;
 	}
 
 	async updateEvent(id: string, updates: Partial<Event>): Promise<Event | null> {
-		const payload: any = {};
+		const payload: Partial<BackendEvent> = {};
 		if (updates.title) payload.name = updates.title;
 		if (typeof updates.description === 'string') payload.description = updates.description;
 		if (updates.date) payload.date = updates.date;
 		if (updates.location) payload.location = updates.location;
-		const data = await http<any>(`/api/events/${id}`, {
+		const data = await http<BackendEvent>(`/api/events/${id}`, {
 			method: 'PUT',
 			headers: { ...authHeaders() },
 			body: JSON.stringify(payload),
@@ -186,14 +192,14 @@ class APIService {
 
 	// Attendance
 	async getEventAttendance(eventId: string): Promise<{ attendance: Attendance[]; attendees: User[] }> {
-		const data = await http<any[]>(`/api/attenders/events/${eventId}/attendance`, { headers: { ...authHeaders() } });
+		const data = await http<BackendUser[]>(`/api/attenders/events/${eventId}/attendance`, { headers: { ...authHeaders() } });
 		const attendees = data.map(mapUser);
 		return { attendance: [], attendees };
 	}
 
 	async getStudentAttendance(_studentId: string): Promise<{ attendance: Attendance[]; events: Event[] }> {
 		// Backend provides my events for the authenticated attender
-		const data = await http<any[]>('/api/attenders/my-events', { headers: { ...authHeaders() } });
+		const data = await http<BackendEvent[]>('/api/attenders/my-events', { headers: { ...authHeaders() } });
 		const events = data.map(mapEvent);
 		return { attendance: [], events };
 	}
@@ -208,8 +214,8 @@ class APIService {
 
 	// Feedback
 	async getEventFeedback(eventId: string): Promise<Feedback[]> {
-		const data = await http<any[]>(`/api/feedback/${eventId}`, { headers: { ...authHeaders() } });
-		return (data || []).map((fb: any) => ({
+		const data = await http<BackendFeedback[]>(`/api/feedback/${eventId}`, { headers: { ...authHeaders() } });
+		return (data || []).map((fb: BackendFeedback) => ({
 			id: fb._id || fb.id,
 			event_id: fb.event?._id || fb.event_id || eventId,
 			student_id: fb.user?._id || fb.student_id,
@@ -220,7 +226,7 @@ class APIService {
 	}
 
 	async submitFeedback(feedbackData: { event_id: string; student_id: string; rating: number; comments: string; }): Promise<Feedback> {
-		const data = await http<any>(`/api/feedback/${feedbackData.event_id}`, {
+		const data = await http<BackendFeedback>(`/api/feedback/${feedbackData.event_id}`, {
 			method: 'POST',
 			headers: { ...authHeaders() },
 			body: JSON.stringify({ rating: feedbackData.rating, comments: feedbackData.comments }),
@@ -245,8 +251,8 @@ class APIService {
 	// Stats
 	async getAdminStats(): Promise<{ totalEvents: number; totalUsers: number; totalCoordinators: number; thisMonthEvents: number; }> {
 		const [eventsRaw, usersRaw] = await Promise.all([
-			http<any[]>('/api/events', { headers: { ...authHeaders() } }),
-			http<any[]>('/api/admin/users', { headers: { ...authHeaders() } }),
+			http<BackendEvent[]>('/api/events', { headers: { ...authHeaders() } }),
+			http<BackendUser[]>('/api/admin/users', { headers: { ...authHeaders() } }),
 		]);
 		const events = eventsRaw.map(mapEvent);
 		const users = usersRaw.map(mapUser);
@@ -262,7 +268,7 @@ class APIService {
 	}
 
 	async getCoordinatorStats(_coordinatorId: string): Promise<{ assignedEvents: number; totalAttendees: number; avgFeedbackRating: number; }> {
-		const data = await http<any>('/api/events/stats/coordinator/summary', { headers: { ...authHeaders() } });
+		const data = await http<BackendStatsResponse>('/api/events/stats/coordinator/summary', { headers: { ...authHeaders() } });
 		// Backend returns { assignedEvents, attendance }
 		return {
 			assignedEvents: data.assignedEvents ?? data.events ?? 0,
@@ -274,7 +280,7 @@ class APIService {
 	async getStudentStats(_studentId: string): Promise<{ attendedEvents: number; upcomingEvents: number; feedbackGiven: number; }> {
 		const [allEvents, myEvents] = await Promise.all([
 			this.getEvents(),
-			http<any[]>('/api/attenders/my-events', { headers: { ...authHeaders() } }),
+			http<BackendEvent[]>('/api/attenders/my-events', { headers: { ...authHeaders() } }),
 		]);
 		const now = new Date();
 		const upcomingEvents = allEvents.filter(e => new Date(e.date) > now).length;

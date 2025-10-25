@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
 import { QRCodeGenerator } from '@/components/QRCodeGenerator';
+import { GoogleFormQRGenerator } from '@/components/GoogleFormQRGenerator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Users, QrCode } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CalendarDays, Users, QrCode, Plus, FileText, Sparkles } from 'lucide-react';
 import { Event, User } from '@/types';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,6 +16,7 @@ export default function CoordinatorDashboard() {
   const { user } = useAuth();
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [showQRDialog, setShowQRDialog] = useState(false);
+  const [showGoogleFormQRDialog, setShowGoogleFormQRDialog] = useState(false);
   const [showAttendanceDialog, setShowAttendanceDialog] = useState(false);
   const [assignedEvents, setAssignedEvents] = useState<Event[]>([]);
   const [attendanceData, setAttendanceData] = useState<User[]>([]);
@@ -23,13 +26,7 @@ export default function CoordinatorDashboard() {
     avgFeedbackRating: 0
   });
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -42,11 +39,22 @@ export default function CoordinatorDashboard() {
     } catch (error) {
       console.error('Failed to load coordinator data:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
 
   const handleGenerateQR = (event: Event) => {
     setSelectedEvent(event);
     setShowQRDialog(true);
+  };
+
+  const handleGenerateGoogleFormQR = (event: Event) => {
+    setSelectedEvent(event);
+    setShowGoogleFormQRDialog(true);
   };
 
   const handleViewAttendance = async (event: Event) => {
@@ -75,6 +83,42 @@ export default function CoordinatorDashboard() {
           <h1 className="text-3xl font-bold">Coordinator Dashboard</h1>
           <p className="text-muted-foreground">Manage your assigned events</p>
         </div>
+
+        {/* Google Form CTA Section */}
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FileText className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-blue-900">Create Interactive Events</h3>
+                  <p className="text-blue-700 text-sm">
+                    Generate QR codes for Google Forms to collect feedback and registrations from attendees
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Learn More
+                </Button>
+                <Button 
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Event
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {statsDisplay.map((stat) => (
@@ -106,6 +150,7 @@ export default function CoordinatorDashboard() {
                   event={event}
                   onViewDetails={() => console.log('View details:', event.id)}
                   onGenerateQR={() => handleGenerateQR(event)}
+                  onGenerateGoogleFormQR={() => handleGenerateGoogleFormQR(event)}
                   onViewAttendance={() => handleViewAttendance(event)}
                 />
               ))}
@@ -121,6 +166,21 @@ export default function CoordinatorDashboard() {
             </DialogHeader>
             {selectedEvent && (
               <QRCodeGenerator 
+                eventId={selectedEvent.id}
+                eventTitle={selectedEvent.title}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Google Form QR Code Dialog */}
+        <Dialog open={showGoogleFormQRDialog} onOpenChange={setShowGoogleFormQRDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Google Form QR Code Generator</DialogTitle>
+            </DialogHeader>
+            {selectedEvent && (
+              <GoogleFormQRGenerator 
                 eventId={selectedEvent.id}
                 eventTitle={selectedEvent.title}
               />

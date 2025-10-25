@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
 import { QRScanner } from '@/components/QRScanner';
@@ -24,13 +24,7 @@ export default function StudentDashboard() {
   });
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-    }
-  }, [user]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
     
     try {
@@ -49,7 +43,13 @@ export default function StudentDashboard() {
     } catch (error) {
       console.error('Failed to load student data:', error);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadData();
+    }
+  }, [user, loadData]);
 
   const handleQRScanSuccess = async (eventId: string) => {
     if (!user) return;
@@ -63,10 +63,10 @@ export default function StudentDashboard() {
       });
       // Refresh data
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Error",
-        description: error.message || "Failed to mark attendance",
+        description: (error instanceof Error ? error.message : "Failed to mark attendance"),
         variant: "destructive"
       });
     }

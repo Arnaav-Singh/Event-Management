@@ -5,6 +5,7 @@ import { apiService } from '@/services/api';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role: 'superadmin' | 'admin' | 'coordinator' | 'student') => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -37,6 +38,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const register = async (name: string, email: string, password: string, role: 'superadmin' | 'admin' | 'coordinator' | 'student') => {
+    try {
+      const { user, token } = await apiService.register({ name, email, password, role });
+      setUser(user);
+      localStorage.setItem('auth_user', JSON.stringify(user));
+      localStorage.setItem('auth_token', token);
+    } catch (error) {
+      throw new Error('Registration failed');
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('auth_user');
@@ -44,7 +56,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

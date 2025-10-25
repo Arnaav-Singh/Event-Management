@@ -2,17 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/types';
-import { Calendar, MapPin, User, QrCode, Users } from 'lucide-react';
+import { Calendar, MapPin, User, QrCode, Users, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface EventCardProps {
   event: Event;
   onViewDetails?: () => void;
   onGenerateQR?: () => void;
+  onGenerateGoogleFormQR?: () => void;
   onViewAttendance?: () => void;
 }
 
-export function EventCard({ event, onViewDetails, onGenerateQR, onViewAttendance }: EventCardProps) {
+export function EventCard({ event, onViewDetails, onGenerateQR, onGenerateGoogleFormQR, onViewAttendance }: EventCardProps) {
   const { user } = useAuth();
   
   const formatDate = (dateString: string) => {
@@ -77,6 +78,15 @@ export function EventCard({ event, onViewDetails, onGenerateQR, onViewAttendance
               >
                 <QrCode className="w-4 h-4" />
                 QR Code
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={onGenerateGoogleFormQR}
+                className="gap-1"
+              >
+                <FileText className="w-4 h-4" />
+                Form QR
               </Button>
               <Button 
                 variant="secondary" 

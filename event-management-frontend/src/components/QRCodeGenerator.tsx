@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,9 +19,9 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
 
   useEffect(() => {
     generateQRCode();
-  }, [eventId]);
+  }, [eventId, generateQRCode]);
 
-  const generateQRCode = async () => {
+  const generateQRCode = useCallback(async () => {
     try {
       const url = await QRCode.toDataURL(attendanceUrl, {
         width: 300,
@@ -40,7 +40,7 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
         variant: "destructive"
       });
     }
-  };
+  }, [attendanceUrl, toast]);
 
   const downloadQRCode = () => {
     const link = document.createElement('a');
