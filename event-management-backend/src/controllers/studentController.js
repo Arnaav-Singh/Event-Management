@@ -1,14 +1,39 @@
 import Event from '../models/Event.js';
+import EventInvitation from '../models/EventInvitation.js';
 
 export const registerForEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
     if (!event) return res.status(404).json({ message: 'Event not found' });
+    if (event.invitationMode === 'invite-only') {
+      const invitation = await EventInvitation.findOne({ event: event._id, invitee: req.user._id });
+      if (!invitation || invitation.status === 'declined') {
+        return res.status(403).json({ message: 'This event is invite-only. Please contact the coordinator.' });
+      }
+    }
     if (event.attendees.includes(req.user._id)) {
       return res.status(400).json({ message: 'Already registered' });
     }
     event.attendees.push(req.user._id);
     await event.save();
+
+    await EventInvitation.findOneAndUpdate(
+      { event: event._id, invitee: req.user._id },
+      {
+        $set: {
+          invitedBy: req.user._id,
+          roleAtEvent: 'attendee',
+          status: 'accepted',
+          respondedAt: new Date(),
+        },
+        $setOnInsert: {
+          event: event._id,
+          invitee: req.user._id,
+        },
+      },
+      { upsert: true }
+    );
+
     res.json({ message: 'Registered successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -38,6 +63,12 @@ export const markAttendance = async (req, res) => {
     }
     event.attendance.push(req.user._id);
     await event.save();
+
+    await EventInvitation.findOneAndUpdate(
+      { event: event._id, invitee: req.user._id },
+      { status: 'accepted', respondedAt: new Date() }
+    );
+
     res.json({ message: 'Attendance marked' });
   } catch (err) {
     res.status(500).json({ message: err.message });

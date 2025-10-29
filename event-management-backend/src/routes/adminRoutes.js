@@ -4,9 +4,11 @@ import { getUsers, createUser, deleteUser, getAllEvents } from '../controllers/a
 import authMiddleware from '../middleware/authMiddleware.js';
 import roleMiddleware from '../middleware/roleMiddleware.js';
 
-router.get('/users', authMiddleware, roleMiddleware(['admin']), getUsers);
-router.post('/users', authMiddleware, roleMiddleware(['admin']), createUser);
-router.delete('/users/:id', authMiddleware, roleMiddleware(['admin']), deleteUser);
-router.get('/events', authMiddleware, roleMiddleware(['admin']), getAllEvents);
+const deanRoles = ['dean', 'superadmin'];
+
+router.get('/users', authMiddleware, roleMiddleware(deanRoles), getUsers);
+router.post('/users', authMiddleware, roleMiddleware(deanRoles), createUser);
+router.delete('/users/:id', authMiddleware, roleMiddleware(deanRoles), deleteUser);
+router.get('/events', authMiddleware, roleMiddleware(deanRoles), getAllEvents);
 
 export default router;

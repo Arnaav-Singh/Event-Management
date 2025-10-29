@@ -6,10 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
-import AdminDashboard from "./pages/AdminDashboard";
 import CoordinatorDashboard from "./pages/CoordinatorDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import DeanDashboard from "./pages/DeanDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,10 +33,10 @@ function DashboardRouter() {
   if (!user) return <Navigate to="/login" replace />;
   
   switch (user.role) {
+    case 'dean':
     case 'superadmin':
-      return <SuperAdminDashboard />;
     case 'admin':
-      return <AdminDashboard />;
+      return <DeanDashboard />;
     case 'coordinator':
       return <CoordinatorDashboard />;
     case 'student':
@@ -53,7 +52,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />

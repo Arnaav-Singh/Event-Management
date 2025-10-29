@@ -2,10 +2,20 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@/types';
 import { apiService } from '@/services/api';
 
+interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: 'dean' | 'coordinator' | 'student';
+  school?: string;
+  department?: string;
+  designation?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: 'superadmin' | 'admin' | 'coordinator' | 'student') => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -38,9 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: 'superadmin' | 'admin' | 'coordinator' | 'student') => {
+  const register = async ({ name, email, password, role, school, department, designation }: RegisterPayload) => {
     try {
-      const { user, token } = await apiService.register({ name, email, password, role });
+      const { user, token } = await apiService.register({ name, email, password, role, school, department, designation });
       setUser(user);
       localStorage.setItem('auth_user', JSON.stringify(user));
       localStorage.setItem('auth_token', token);

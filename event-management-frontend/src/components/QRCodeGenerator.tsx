@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Copy, Check } from 'lucide-react';
+import { Download, Copy, Check, RefreshCcw, Timer } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiService } from '@/services/api';
 
 interface QRCodeGeneratorProps {
   eventId: string;
@@ -12,18 +13,22 @@ interface QRCodeGeneratorProps {
 
 export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [attendanceUrl, setAttendanceUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [code, setCode] = useState<string>('');
   const { toast } = useToast();
 
-  const attendanceUrl = `${window.location.origin}/attendance/${eventId}`;
-
-  useEffect(() => {
-    generateQRCode();
-  }, [eventId, generateQRCode]);
-
   const generateQRCode = useCallback(async () => {
+    setLoading(true);
     try {
-      const url = await QRCode.toDataURL(attendanceUrl, {
+      const { code, expiresAt } = await apiService.requestAttendanceCode(eventId);
+      setCode(code);
+      setExpiresAt(expiresAt);
+      const urlForQr = await apiService.generateQRCode(eventId, code);
+      setAttendanceUrl(urlForQr);
+      const url = await QRCode.toDataURL(urlForQr, {
         width: 300,
         margin: 2,
         color: {
@@ -39,13 +44,20 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
         description: "Failed to generate QR code",
         variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
-  }, [attendanceUrl, toast]);
+  }, [eventId, toast]);
+
+  useEffect(() => {
+    generateQRCode();
+  }, [eventId, generateQRCode]);
 
   const downloadQRCode = () => {
     const link = document.createElement('a');
     link.href = qrCodeUrl;
-    link.download = `${eventTitle.replace(/\s+/g, '_')}_QR.png`;
+    const safeCode = code ? `_${code.slice(0, 6)}` : '';
+    link.download = `${eventTitle.replace(/\s+/g, '_')}${safeCode}_QR.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -58,7 +70,7 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(attendanceUrl);
+      await navigator.clipboard.writeText(attendanceUrl || `${window.location.origin}/attendance/${eventId}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       
@@ -86,14 +98,23 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
             <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64" />
           </div>
         )}
+        {loading && !qrCodeUrl && (
+          <p className="text-sm text-muted-foreground">Generating secure attendance code…</p>
+        )}
         
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">
             Students can scan this QR code to mark attendance
           </p>
           <code className="text-xs bg-muted px-2 py-1 rounded break-all">
-            {attendanceUrl}
+            {attendanceUrl || `${window.location.origin}/attendance/${eventId}`}
           </code>
+          {expiresAt && (
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Timer className="w-3 h-3" />
+              <span>Expires at {new Date(expiresAt).toLocaleTimeString()}</span>
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2 w-full">
@@ -112,6 +133,15 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied!' : 'Copy URL'}
+          </Button>
+          <Button
+            onClick={generateQRCode}
+            variant="outline"
+            className="flex-1 gap-2"
+            disabled={loading}
+          >
+            <RefreshCcw className="w-4 h-4" />
+            Refresh Code
           </Button>
         </div>
       </CardContent>

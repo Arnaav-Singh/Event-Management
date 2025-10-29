@@ -1,17 +1,39 @@
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
+const normaliseRole = (incomingRole) => {
+  const allowed = ['student', 'coordinator', 'dean'];
+  if (allowed.includes(incomingRole)) return incomingRole;
+  if (incomingRole === 'superadmin') return 'dean';
+  if (incomingRole === 'attender') return 'student';
+  return 'student';
+};
+
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, school, department, designation } = req.body;
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
-    const user = await User.create({ name, email, password, role });
+
+    const resolvedRole = normaliseRole(role);
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: resolvedRole,
+      school,
+      department,
+      designation,
+    });
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
+      school: user.school,
+      department: user.department,
+      designation: user.designation,
       token: generateToken(user._id, user.role),
     });
   } catch (err) {
@@ -30,7 +52,10 @@ export const login = async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: normaliseRole(user.role),
+      school: user.school,
+      department: user.department,
+      designation: user.designation,
       token: generateToken(user._id, user.role),
     });
   } catch (err) {

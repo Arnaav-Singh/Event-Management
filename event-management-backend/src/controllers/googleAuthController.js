@@ -12,7 +12,7 @@ export const googleLogin = async (req, res) => {
     const { email, name, picture } = payload;
     let user = await User.findOne({ email });
     if (!user) {
-      user = await User.create({ name, email, password: '', role: 'attender', avatar: picture });
+      user = await User.create({ name, email, password: '', role: 'student', avatar: picture });
     }
     res.json({
       _id: user._id,

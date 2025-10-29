@@ -10,30 +10,30 @@ const createSuperAdmin = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
-    // Check if super admin already exists
+    // Check if dean already exists
     const existingSuperAdmin = await User.findOne({ email: 'admin@unievents.com' });
     if (existingSuperAdmin) {
-      console.log('Super admin already exists');
+      console.log('Dean account already exists');
       process.exit(0);
     }
 
-    // Create super admin user
+    // Create dean user
     const superAdmin = await User.create({
-      name: 'Super Administrator',
+      name: 'Dean',
       email: 'admin@unievents.com',
       password: 'superadmin123',
-      role: 'superadmin'
+      role: 'dean'
     });
 
-    console.log('Super admin created successfully:');
+    console.log('Dean account created successfully:');
     console.log('Email: admin@unievents.com');
     console.log('Password: superadmin123');
-    console.log('Role: superadmin');
+    console.log('Role: dean');
     console.log('User ID:', superAdmin._id);
 
     process.exit(0);
   } catch (error) {
-    console.error('Error creating super admin:', error);
+    console.error('Error creating dean account:', error);
     process.exit(1);
   }
 };

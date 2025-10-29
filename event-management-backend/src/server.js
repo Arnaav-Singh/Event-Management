@@ -12,7 +12,7 @@ import { notFound, errorHandler } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import coordinatorRoutes from "./routes/coordinatorRoutes.js";
-import attenderRoutes from "./routes/attenderRoutes.js";
+import studentRoutes from "./routes/studentRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import superadminRoutes from "./routes/superadminRoutes.js";
@@ -114,7 +114,7 @@ app.use('/api/superadmin', superadminRoutes);
 
 app.use('/api/admin', adminRoutes);
 app.use('/api/coordinators', coordinatorRoutes);
-app.use('/api/attenders', attenderRoutes);
+app.use('/api/students', studentRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/notification', notificationRoutes);

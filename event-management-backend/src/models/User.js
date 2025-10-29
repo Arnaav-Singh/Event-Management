@@ -7,10 +7,13 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  school: { type: String },
+  department: { type: String },
+  designation: { type: String },
   role: {
     type: String,
-    enum: ['superadmin', 'admin', 'coordinator', 'attender', 'faculty'],
-    default: 'attender',
+    enum: ['dean', 'coordinator', 'student', 'superadmin'],
+    default: 'student',
   },
   authToken: { type: String },
 }, { timestamps: true });

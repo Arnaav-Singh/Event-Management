@@ -2,11 +2,78 @@ import User from '../models/User.js';
 import Event from '../models/Event.js';
 import Feedback from '../models/Feedback.js';
 import mongoose from 'mongoose';
+import EventInvitation from '../models/EventInvitation.js';
 
 // Get all users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password');
+    const { role, roles, school, department, search, scope } = req.query || {};
+
+    const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : undefined;
+    const roleListArray = Array.isArray(roles)
+      ? roles
+      : typeof roles === 'string'
+        ? roles.split(',')
+        : [];
+    const roleList = roleListArray
+      .map((r) => (typeof r === 'string' ? r.trim().toLowerCase() : ''))
+      .filter(Boolean);
+
+    const filters = {};
+
+    if (req.user?.role === 'dean') {
+      const defaultRoles = ['dean', 'superadmin', 'coordinator'];
+      const allowedRoles = new Set(defaultRoles);
+      let selectedRoles = roleList.length
+        ? roleList
+        : normalizedRole
+          ? [normalizedRole]
+          : defaultRoles;
+
+      selectedRoles = selectedRoles.filter((r) => allowedRoles.has(r));
+      if (selectedRoles.length === 0) {
+        selectedRoles = defaultRoles;
+      }
+
+      filters.role = selectedRoles.length === 1 ? selectedRoles[0] : { $in: selectedRoles };
+
+      if (school) {
+        filters.school = school;
+      } else if (scope !== 'all' && req.user.school) {
+        filters.school = { $ne: req.user.school };
+      }
+    } else {
+      if (roleList.length) {
+        filters.role = roleList.length === 1 ? roleList[0] : { $in: roleList };
+      } else if (normalizedRole) {
+        filters.role = normalizedRole;
+      }
+      if (school) filters.school = school;
+    }
+
+    if (department) filters.department = department;
+
+    const queryConditions = [{ _id: { $ne: req.user?._id } }];
+
+    if (Object.keys(filters).length > 0) {
+      queryConditions.push(filters);
+    }
+
+    if (search && typeof search === 'string') {
+      const safeSearch = search.trim();
+      if (safeSearch.length > 0) {
+        queryConditions.push({
+          $or: [
+            { name: { $regex: safeSearch, $options: 'i' } },
+            { email: { $regex: safeSearch, $options: 'i' } },
+            { school: { $regex: safeSearch, $options: 'i' } },
+            { department: { $regex: safeSearch, $options: 'i' } },
+          ],
+        });
+      }
+    }
+
+    const users = await User.find({ $and: queryConditions }).select('-password');
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -16,8 +83,33 @@ export const getAllUsers = async (req, res) => {
 // Delete any user
 export const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const { password } = req.body || {};
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Password confirmation is required' });
+    }
+
+    const actor = await User.findById(req.user?._id);
+    if (!actor) {
+      return res.status(401).json({ message: 'Session invalid. Please sign in again.' });
+    }
+
+    const passwordMatches = await actor.matchPassword(password);
+    if (!passwordMatches) {
+      return res.status(401).json({ message: 'Invalid password' });
+    }
+
+    if (actor._id.toString() === req.params.id) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    if (actor.role === 'dean' && !['coordinator', 'dean'].includes(user.role)) {
+      return res.status(403).json({ message: 'Deans may only remove coordinators or fellow deans' });
+    }
+
+    await user.deleteOne();
     res.json({ message: 'User deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -27,7 +119,16 @@ export const deleteUser = async (req, res) => {
 // Get all events
 export const getAllEvents = async (req, res) => {
   try {
-    const events = await Event.find().populate('createdBy', 'name email');
+    const filter = {};
+    if (req.query?.school) filter.school = req.query.school;
+    if (req.query?.department) filter.department = req.query.department;
+    if (req.query?.status) filter.status = req.query.status;
+    if (req.query?.approvalStatus) filter.approvalStatus = req.query.approvalStatus;
+
+    const events = await Event.find(filter)
+      .populate('createdBy', 'name email role designation')
+      .populate('coordinators', 'name email role designation')
+      .populate('approvedBy', 'name email role designation');
     res.json(events);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -48,21 +149,43 @@ export const deleteEvent = async (req, res) => {
 // Get all feedback
 export const getAllFeedback = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find().populate('user', 'name email').populate('event', 'title');
+    const filter = {};
+    if (req.query?.eventId && mongoose.Types.ObjectId.isValid(req.query.eventId)) {
+      filter.event = req.query.eventId;
+    }
+    const feedbacks = await Feedback.find(filter)
+      .populate('user', 'name email role')
+      .populate('event', 'name date location');
     res.json(feedbacks);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Create a superadmin user
+// Create a dean user
 export const createSuperAdmin = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, school, department, designation } = req.body;
     const exists = await User.findOne({ email });
     if (exists) return res.status(400).json({ message: 'Email already in use' });
-    const user = await User.create({ name, email, password, role: 'superadmin' });
-    res.status(201).json({ _id: user._id, name: user.name, email: user.email, role: user.role });
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: 'dean',
+      school,
+      department,
+      designation: designation || 'Dean',
+    });
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      school: user.school,
+      department: user.department,
+      designation: user.designation,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -71,13 +194,18 @@ export const createSuperAdmin = async (req, res) => {
 // Bulk create coordinators from provided array
 export const bulkCreateCoordinators = async (req, res) => {
   try {
-    const { coordinators } = req.body; // [{name,email,password}]
+    const { coordinators } = req.body; // [{name,email,password,school,department}]
     if (!Array.isArray(coordinators) || coordinators.length === 0) {
       return res.status(400).json({ message: 'No coordinators provided' });
     }
-    const docs = coordinators.map(c => ({ ...c, role: 'coordinator' }));
+    const docs = coordinators.map((c) => ({
+      ...c,
+      role: 'coordinator',
+      school: c.school || req.user.school,
+      department: c.department || req.user.department,
+    }));
     const result = await User.insertMany(docs, { ordered: false });
-    res.status(201).json({ created: result.length });
+    res.status(201).json({ created: result.length, importFailed: coordinators.length - result.length });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -87,12 +215,34 @@ export const bulkCreateCoordinators = async (req, res) => {
 export const assignEventToCoordinator = async (req, res) => {
   try {
     const { coordinatorId } = req.body;
+    if (!mongoose.Types.ObjectId.isValid(coordinatorId)) {
+      return res.status(400).json({ message: 'Invalid coordinator id' });
+    }
+
     const event = await Event.findByIdAndUpdate(
       req.params.eventId,
       { $addToSet: { coordinators: new mongoose.Types.ObjectId(coordinatorId) } },
       { new: true }
-    ).populate('coordinators', 'name email');
+    ).populate('coordinators', 'name email role designation');
     if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    await EventInvitation.findOneAndUpdate(
+      { event: event._id, invitee: coordinatorId },
+      {
+        $set: {
+          invitedBy: req.user._id,
+          roleAtEvent: 'coordinator',
+          status: 'accepted',
+          respondedAt: new Date(),
+        },
+        $setOnInsert: {
+          event: event._id,
+          invitee: coordinatorId,
+        },
+      },
+      { upsert: true }
+    );
+
     res.json(event);
   } catch (err) {
     res.status(500).json({ message: err.message });

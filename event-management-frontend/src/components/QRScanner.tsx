@@ -6,7 +6,7 @@ import { Camera, Type } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface QRScannerProps {
-  onScanSuccess: (eventId: string) => void;
+  onScanSuccess: (payload: { eventId: string; code?: string }) => void;
 }
 
 export function QRScanner({ onScanSuccess }: QRScannerProps) {
@@ -44,20 +44,48 @@ export function QRScanner({ onScanSuccess }: QRScannerProps) {
   };
 
   const handleManualSubmit = () => {
-    if (manualInput.trim()) {
-      // Extract event ID from URL or use input directly
-      const eventId = manualInput.includes('/attendance/') 
-        ? manualInput.split('/attendance/')[1] 
-        : manualInput;
-      onScanSuccess(eventId);
-      setManualInput('');
+    const input = manualInput.trim();
+    if (!input) return;
+
+    let eventId = input;
+    let code: string | undefined;
+
+    try {
+      if (input.startsWith('http')) {
+        const url = new URL(input);
+        const parts = url.pathname.split('/');
+        const idFromPath = parts[parts.indexOf('attendance') + 1];
+        if (idFromPath) {
+          eventId = idFromPath;
+        }
+        const codeParam = url.searchParams.get('code');
+        if (codeParam) {
+          code = codeParam;
+        }
+      } else if (input.includes('/attendance/')) {
+        const [_, slug] = input.split('/attendance/');
+        if (slug) {
+          const [idPart, query] = slug.split('?');
+          eventId = idPart;
+          if (query) {
+            const params = new URLSearchParams(query);
+            code = params.get('code') || undefined;
+          }
+        }
+      }
+    } catch (_) {
+      // fallback to direct input
     }
+
+    onScanSuccess({ eventId, code });
+    setManualInput('');
   };
 
   // Simulated QR detection (in real app, you'd use a proper QR scanning library)
   const simulateQRScan = () => {
-    const mockEventId = 'event-123';
-    onScanSuccess(mockEventId);
+    const mockEventId = 'demo-event-id';
+    const mockCode = 'samplecode1234';
+    onScanSuccess({ eventId: mockEventId, code: mockCode });
     stopCamera();
     toast({
       title: "Attendance Marked!",
@@ -120,7 +148,7 @@ export function QRScanner({ onScanSuccess }: QRScannerProps) {
           </p>
           <div className="flex gap-2">
             <Input
-              placeholder="Enter event ID or URL"
+              placeholder="Enter attendance URL or event ID"
               value={manualInput}
               onChange={(e) => setManualInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleManualSubmit()}

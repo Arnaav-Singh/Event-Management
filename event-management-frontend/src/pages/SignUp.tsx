@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,19 +8,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, UserPlus, ArrowLeft } from 'lucide-react';
+import { DEFAULT_SCHOOL, getAllSchools, getBranchesForSchool } from '@/lib/schools';
+
+type SignUpRole = 'student' | 'coordinator' | 'dean';
+
+interface SignUpFormState {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: SignUpRole;
+  school: string;
+  department: string;
+}
 
 export default function SignUp() {
   const { user, register } = useAuth();
-  const [formData, setFormData] = useState({
+  const initialSchool = DEFAULT_SCHOOL;
+  const initialDepartment = getBranchesForSchool(initialSchool)[0] ?? '';
+  const [formData, setFormData] = useState<SignUpFormState>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' as 'superadmin' | 'admin' | 'coordinator' | 'student'
+    role: 'student',
+    school: initialSchool,
+    department: initialDepartment,
   });
   const [loading, setLoading] = useState(false);
+  const schoolOptions = useMemo(() => getAllSchools(), []);
+  const branchOptions = useMemo(() => {
+    const branches = getBranchesForSchool(formData.school);
+    return branches.length > 0 ? branches : ['General'];
+  }, [formData.school]);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!branchOptions.includes(formData.department)) {
+      setFormData((prev) => ({
+        ...prev,
+        department: branchOptions[0] ?? '',
+      }));
+    }
+  }, [branchOptions, formData.department]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,8 +78,25 @@ export default function SignUp() {
       return;
     }
 
+    if (!formData.school || !formData.department) {
+      toast({
+        title: "School details required",
+        description: "Please select your school and branch so coordinators can reach you easily.",
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
-      await register(formData.name, formData.email, formData.password, formData.role);
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        school: formData.school,
+        department: formData.department,
+      });
       toast({
         title: "Account Created!",
         description: "Your account has been created successfully. You can now sign in."
@@ -65,8 +113,21 @@ export default function SignUp() {
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof SignUpFormState, value: string) => {
+    setFormData((prev) => {
+      if (field === 'school') {
+        const nextBranches = getBranchesForSchool(value);
+        return {
+          ...prev,
+          school: value,
+          department: nextBranches[0] ?? '',
+        };
+      }
+      if (field === 'role') {
+        return { ...prev, role: value as SignUpRole };
+      }
+      return { ...prev, [field]: value };
+    });
   };
 
   // Redirect if already logged in
@@ -76,21 +137,27 @@ export default function SignUp() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-university-light to-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-48 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/25 blur-3xl" />
+        <div className="absolute -bottom-40 right-12 h-72 w-72 rounded-full bg-warning/20 blur-[140px]" />
+        <div className="absolute -left-24 top-1/3 h-80 w-80 rounded-full bg-accent/20 blur-[150px]" />
+      </div>
+
+      <div className="relative w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
-          <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Calendar className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 bg-gradient-primary rounded-[28px] flex items-center justify-center mx-auto mb-5 shadow-glow">
+            <Calendar className="w-9 h-9 text-white" />
           </div>
           <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            UniEvents
+            UniPal MIT
           </h1>
           <p className="text-muted-foreground">
-            College Event Management System
+            The event companion for MAHE's Manipal Institute of Technology
           </p>
         </div>
 
-        <Card className="bg-gradient-card shadow-card border-0">
+        <Card className="hover:-translate-y-1 hover:shadow-glow">
           <CardHeader>
             <CardTitle>Create Account</CardTitle>
             <CardDescription>
@@ -125,15 +192,46 @@ export default function SignUp() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">Account Type</Label>
-                <Select value={formData.role} onValueChange={(value: 'superadmin' | 'admin' | 'coordinator' | 'student') => handleInputChange('role', value)}>
+                <Select value={formData.role} onValueChange={(value: SignUpRole) => handleInputChange('role', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select account type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="coordinator">Event Coordinator</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="superadmin">Super Administrator</SelectItem>
+                    <SelectItem value="coordinator">Coordinator</SelectItem>
+                    <SelectItem value="dean">Dean</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="school">School</Label>
+                <Select value={formData.school} onValueChange={(value) => handleInputChange('school', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select school" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {schoolOptions.map((school) => (
+                      <SelectItem key={school} value={school}>
+                        {school}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="department">Branch / Department</Label>
+                <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select branch or department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {branchOptions.map((branch) => (
+                      <SelectItem key={branch} value={branch}>
+                        {branch}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -164,26 +262,26 @@ export default function SignUp() {
               
               <Button 
                 type="submit" 
-                className="w-full gap-2" 
+                className="w-full gap-2 shadow-button transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow" 
                 disabled={loading}
               >
                 <UserPlus className="w-4 h-4" />
-                {loading ? 'Creating Account...' : 'Create Account'}
+                {loading ? 'Creating account...' : 'Create account'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-card shadow-card border-0">
+        <Card className="hover:-translate-y-1 hover:shadow-glow">
           <CardContent className="pt-6">
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
                 Already have an account?
               </p>
-              <Button asChild variant="outline" className="w-full gap-2">
+              <Button asChild variant="outline" className="w-full gap-2 transition-all duration-300 hover:-translate-y-0.5">
                 <Link to="/login">
                   <ArrowLeft className="w-4 h-4" />
-                  Sign In Instead
+                  Sign in instead
                 </Link>
               </Button>
             </div>

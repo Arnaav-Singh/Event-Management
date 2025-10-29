@@ -1,8 +1,18 @@
 import Feedback from '../models/Feedback.js';
+import Event from '../models/Event.js';
 
 export const submitFeedback = async (req, res) => {
   try {
     const { rating, comments } = req.body;
+    const event = await Event.findById(req.params.eventId);
+    if (!event) return res.status(404).json({ message: 'Event not found' });
+
+    const userId = req.user._id.toString();
+    const hasAttended = (event.attendance || []).some((att) => att.toString() === userId);
+    if (!hasAttended) {
+      return res.status(403).json({ message: 'Feedback allowed after attending the event' });
+    }
+
     const feedback = await Feedback.create({
       user: req.user._id,
       event: req.params.eventId,
