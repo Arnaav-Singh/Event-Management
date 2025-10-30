@@ -1,3 +1,4 @@
+// UI primitive for Dialog built on shadcn/ui library.
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"

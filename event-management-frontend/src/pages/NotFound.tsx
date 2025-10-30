@@ -1,9 +1,11 @@
+// Friendly 404 page that logs missing routes for debugging.
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 
 const NotFound = () => {
   const location = useLocation();
 
+  // Log unknown paths for observability.
   useEffect(() => {
     console.error(
       "404 Error: User attempted to access non-existent route:",

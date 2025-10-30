@@ -1,3 +1,4 @@
+// Event lifecycle endpoints spanning creation, invitations, attendance, and stats.
 import express from 'express';
 const router = express.Router();
 import {
@@ -24,7 +25,7 @@ import roleMiddleware from '../middleware/roleMiddleware.js';
 import { param } from 'express-validator';
 import { validate } from '../middleware/validateRequest.js';
 
-const deanRoles = ['dean', 'superadmin'];
+const deanRoles = ['dean', 'superadmin']; // shared list for reuse across permissions
 
 // Stats routes must be defined before dynamic :id routes
 router.get('/stats/admin/summary', authMiddleware, roleMiddleware(deanRoles), getAdminStats);

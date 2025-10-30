@@ -1,3 +1,4 @@
+// Broadcasts campaign-style announcements optionally tied to specific events.
 import mongoose from 'mongoose';
 
 

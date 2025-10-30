@@ -1,3 +1,4 @@
+// Provides QR scanning UI with manual entry fallback for attendance.
 import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ export function QRScanner({ onScanSuccess }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // Request camera access and stream it into the preview element.
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -43,6 +45,7 @@ export function QRScanner({ onScanSuccess }: QRScannerProps) {
     setIsScanning(false);
   };
 
+  // Parse manual URLs or identifiers into event/code pairs.
   const handleManualSubmit = () => {
     const input = manualInput.trim();
     if (!input) return;

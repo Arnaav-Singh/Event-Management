@@ -1,3 +1,4 @@
+// Notification CRUD endpoints requiring authentication.
 import express from 'express';
 import { sendNotification, getNotifications, markAsRead } from '../controllers/notificationController.js';
 import authMiddleware from '../middleware/authMiddleware.js';

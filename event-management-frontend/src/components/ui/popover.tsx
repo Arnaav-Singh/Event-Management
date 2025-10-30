@@ -1,3 +1,4 @@
+// UI primitive for Popover built on shadcn/ui library.
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 

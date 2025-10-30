@@ -1,6 +1,8 @@
+// Feedback endpoints letting attendees rate events they joined.
 import Feedback from '../models/Feedback.js';
 import Event from '../models/Event.js';
 
+// Persist a feedback entry after confirming the attendee was present.
 export const submitFeedback = async (req, res) => {
   try {
     const { rating, comments } = req.body;
@@ -25,6 +27,7 @@ export const submitFeedback = async (req, res) => {
   }
 };
 
+// Retrieve feedback responses for coordinator or dean review.
 export const getFeedbackForEvent = async (req, res) => {
   try {
     const feedbacks = await Feedback.find({ event: req.params.eventId }).populate('user', 'name email');

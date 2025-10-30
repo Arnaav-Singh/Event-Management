@@ -1,3 +1,4 @@
+// Shared dashboard layout with gradient chrome and role-aware header.
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +12,7 @@ interface LayoutProps {
 export function Layout({ children, title }: LayoutProps) {
   const { user, logout } = useAuth();
 
+  // Theme badges to match the user's current role.
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'dean':

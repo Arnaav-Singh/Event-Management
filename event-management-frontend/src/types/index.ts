@@ -1,3 +1,4 @@
+// Shared TypeScript contracts used across pages and services for API results.
 export interface User {
   id: string;
   name: string;

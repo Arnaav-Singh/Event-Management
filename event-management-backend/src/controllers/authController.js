@@ -1,6 +1,8 @@
+// Local email/password authentication and profile retrieval endpoints.
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 
+// Collapse legacy or aliased roles used by clients into the canonical set.
 const normaliseRole = (incomingRole) => {
   const allowed = ['student', 'coordinator', 'dean'];
   if (allowed.includes(incomingRole)) return incomingRole;
@@ -9,6 +11,7 @@ const normaliseRole = (incomingRole) => {
   return 'student';
 };
 
+// Handle signup and normalise incoming roles to supported values.
 export const register = async (req, res) => {
   try {
     const { name, email, password, role, school, department, designation } = req.body;
@@ -41,6 +44,7 @@ export const register = async (req, res) => {
   }
 };
 
+// Authenticate with email/password and return a session token.
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -63,6 +67,7 @@ export const login = async (req, res) => {
   }
 };
 
+// Respond with the hydrated user object set by auth middleware.
 export const getProfile = async (req, res) => {
   res.json(req.user);
 };

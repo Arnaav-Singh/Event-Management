@@ -1,3 +1,4 @@
+// Central authentication context storing the active user and helper actions.
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@/types';
 import { apiService } from '@/services/api';
@@ -22,6 +23,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Persist user session state and expose auth helper methods.
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Convenience hook to consume the auth context with a helpful error.
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

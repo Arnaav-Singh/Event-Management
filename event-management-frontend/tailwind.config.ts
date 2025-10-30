@@ -1,3 +1,4 @@
+// Tailwind design token configuration mirroring the UniPal theme.
 import type { Config } from "tailwindcss";
 
 export default {

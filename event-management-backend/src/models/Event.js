@@ -1,3 +1,4 @@
+// Stores rich event metadata including scheduling, approvals, and attendance tracking.
 import mongoose from 'mongoose';
 
 

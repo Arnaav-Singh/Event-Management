@@ -1,4 +1,4 @@
-// src/server.js
+// Bootstraps the Express application, configures API middleware, and mounts routes.
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";

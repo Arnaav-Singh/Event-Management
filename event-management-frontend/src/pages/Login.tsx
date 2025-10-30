@@ -1,3 +1,4 @@
+// Login experience leveraging the shared auth context and toast feedback.
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +17,7 @@ export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Authenticate and redirect users toward their dashboards.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

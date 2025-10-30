@@ -1,3 +1,4 @@
+// Admin dashboard offering event creation and system metrics.
 import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
   });
   const { toast } = useToast();
 
+  // Load events, available coordinators, and overview stats.
   const loadData = useCallback(async () => {
     try {
       const [eventsData, coordinatorsData, statsData] = await Promise.all([
@@ -56,6 +58,7 @@ export default function AdminDashboard() {
     loadData();
   }, [loadData]);
 
+  // Create an event on behalf of administrators and refresh stats.
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     

@@ -1,7 +1,9 @@
+// Coordinator workflows including event creation and collaborator management.
 import Event from '../models/Event.js';
 import EventInvitation from '../models/EventInvitation.js';
 import User from '../models/User.js';
 
+// Support comma-delimited or array form inputs for UI flexibility.
 const parseList = (input) => {
   if (!input) return [];
   if (Array.isArray(input)) {
@@ -13,6 +15,7 @@ const parseList = (input) => {
   return [];
 };
 
+// Ensure agenda entries are normalised before persistence.
 const parseAgenda = (agenda) => {
   if (!Array.isArray(agenda)) return [];
   return agenda
@@ -26,6 +29,7 @@ const parseAgenda = (agenda) => {
     }));
 };
 
+// Strip empty contact placeholders and provide defaults.
 const parseContacts = (contacts) => {
   if (!Array.isArray(contacts)) return [];
   return contacts
@@ -38,6 +42,7 @@ const parseContacts = (contacts) => {
     }));
 };
 
+// Confirms the current coordinator is associated with the event being modified.
 const coordinatorOwnsEvent = (event, userId) => {
   if (!event || !userId) return false;
   const idString = userId.toString();
@@ -47,6 +52,7 @@ const coordinatorOwnsEvent = (event, userId) => {
   );
 };
 
+// Allow coordinators to draft new events awaiting approval.
 export const createEvent = async (req, res) => {
   try {
     const {
@@ -130,6 +136,7 @@ export const createEvent = async (req, res) => {
   }
 };
 
+// Update an event owned by the coordinator and flag if the dean should re-review.
 export const updateEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -232,6 +239,7 @@ export const updateEvent = async (req, res) => {
   }
 };
 
+// Soft governance: remove events a coordinator owns when necessary.
 export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -248,6 +256,7 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
+// Return a list of potential invitees filtered by role to help build teams.
 export const getDirectory = async (req, res) => {
   try {
     const role = req.query?.role === 'coordinator' ? 'coordinator' : 'student';

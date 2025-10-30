@@ -1,3 +1,4 @@
+// UI primitive for Slider built on shadcn/ui library.
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
 

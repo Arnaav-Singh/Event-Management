@@ -3,6 +3,7 @@
 
 import { User, Event, Attendance, Feedback } from '@/types';
 
+// Development-only storage shim mimicking MongoDB collections via localStorage.
 class MockDatabase {
   private getCollection<T>(collectionName: string): T[] {
     const data = localStorage.getItem(`mongodb_${collectionName}`);

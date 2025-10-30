@@ -1,3 +1,4 @@
+// Links users to events and tracks approval state for participation.
 import mongoose from 'mongoose';
 
 

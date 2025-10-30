@@ -1,6 +1,7 @@
+// Hook that tracks whether the viewport is narrower than the mobile breakpoint.
 import * as React from "react"
 
-const MOBILE_BREAKPOINT = 768
+const MOBILE_BREAKPOINT = 768 // Tailors responsive behaviour to tablet width
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)

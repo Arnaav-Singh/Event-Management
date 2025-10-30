@@ -1,3 +1,4 @@
+// Guards routes by ensuring the authenticated user has one of the allowed roles.
 const roleMiddleware = (roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

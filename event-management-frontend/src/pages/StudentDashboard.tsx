@@ -1,3 +1,4 @@
+// Student dashboard surfacing invites, attendance history, and QR check-in.
 import { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
@@ -25,6 +26,7 @@ export default function StudentDashboard() {
   });
   const { toast } = useToast();
 
+  // Pull upcoming events, tracked attendance, and pending invites.
   const loadData = useCallback(async () => {
     if (!user) return;
     
@@ -54,6 +56,7 @@ export default function StudentDashboard() {
     }
   }, [user, loadData]);
 
+  // Mark attendance after a successful scan and refresh the dashboard.
   const handleQRScanSuccess = async ({ eventId, code }: { eventId: string; code?: string }) => {
     if (!user) return;
     if (!code) {
@@ -83,6 +86,7 @@ export default function StudentDashboard() {
     }
   };
 
+  // Accept or decline coordinator invitations directly from the dashboard.
   const handleInvitationResponse = async (invitation: EventInvitation, decision: 'accepted' | 'declined') => {
     try {
       await apiService.respondToInvitation(invitation.id, decision);

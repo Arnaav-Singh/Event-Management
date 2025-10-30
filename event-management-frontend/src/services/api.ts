@@ -1,3 +1,4 @@
+// Typed API client consolidating REST calls to the backend service.
 import {
 	User,
 	Event,
@@ -23,15 +24,18 @@ import {
 
 const API_BASE_URL = (import.meta as { env?: { VITE_API_URL?: string } }).env?.VITE_API_URL || 'http://localhost:5050';
 
+// Pull the persisted JWT used for authenticated requests.
 function getAuthToken(): string | null {
 	return localStorage.getItem('auth_token');
 }
 
+// Include the bearer token when available.
 function authHeaders(): Record<string, string> {
 	const token = getAuthToken();
 	return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+// Wrapper around fetch that centralises error handling and JSON parsing.
 async function http<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const res = await fetch(`${API_BASE_URL}${path}`, {
 		...options,
@@ -58,6 +62,7 @@ async function http<T>(path: string, options: RequestInit = {}): Promise<T> {
 	}
 }
 
+// Convert backend role strings into the UI friendly subset.
 function mapRoleFromBackend(role: string): User['role'] {
 	switch (role) {
 		case 'dean':
@@ -74,6 +79,7 @@ function mapRoleFromBackend(role: string): User['role'] {
 	}
 }
 
+// Translate UI role choices back to backend constants.
 function mapRoleToBackend(role: User['role']): string {
 	switch (role) {
 		case 'student':
@@ -85,6 +91,7 @@ function mapRoleToBackend(role: User['role']): string {
 	}
 }
 
+// Normalise backend user payloads into the shape consumed by the UI.
 function mapUser(bu: BackendUser): User {
 	return {
 		id: bu._id || bu.id || bu.userID,
@@ -98,6 +105,7 @@ function mapUser(bu: BackendUser): User {
 	};
 }
 
+// Safely adapt optional event report summaries.
 function normaliseEventReport(report?: BackendEventReport | null): EventReport | undefined {
 	if (!report) return undefined;
 	return {
@@ -112,6 +120,7 @@ function normaliseEventReport(report?: BackendEventReport | null): EventReport |
 	};
 }
 
+// Prepare agenda entries before sending them to the backend.
 function mapAgendaToBackend(items?: EventAgendaItem[]): BackendAgendaItem[] {
 	if (!Array.isArray(items)) return [];
 	return items.map((item) => ({
@@ -123,6 +132,7 @@ function mapAgendaToBackend(items?: EventAgendaItem[]): BackendAgendaItem[] {
 	}));
 }
 
+// Prepare contact records for backend consumption.
 function mapContactsToBackend(items?: EventContact[]): BackendContact[] {
 	if (!Array.isArray(items)) return [];
 	return items.map((contact) => ({
@@ -133,6 +143,7 @@ function mapContactsToBackend(items?: EventContact[]): BackendContact[] {
 	}));
 }
 
+// Convert backend event documents into the richer frontend representation.
 function mapEvent(be: BackendEvent): Event {
 	const rawCoordinators = Array.isArray(be.coordinators) ? be.coordinators : [];
 	const coordinatorIds = rawCoordinators
@@ -201,6 +212,7 @@ function mapEvent(be: BackendEvent): Event {
 	};
 }
 
+// Adapt backend feedback entries into the frontend shape.
 function mapFeedback(fb: BackendFeedback): Feedback {
 	return {
 		id: fb._id || fb.id || crypto.randomUUID(),
@@ -212,6 +224,7 @@ function mapFeedback(fb: BackendFeedback): Feedback {
 	};
 }
 
+// Translate invitation payloads and hydrate invitee/inviter metadata.
 function mapInvitation(invitation: BackendInvitation): EventInvitation {
 	const invitee = invitation.invitee ? mapUser(invitation.invitee) : {
 		id: '',
@@ -238,6 +251,7 @@ function mapInvitation(invitation: BackendInvitation): EventInvitation {
 	};
 }
 
+// Defensive parsing for the hierarchical directory response.
 function normaliseDirectoryResponse(payload: DirectoryResponse): DirectoryResponse {
 	const safeRole: DirectoryResponse['role'] =
 		payload?.role === 'coordinator' ? 'coordinator' : 'student';
@@ -278,6 +292,7 @@ function normaliseDirectoryResponse(payload: DirectoryResponse): DirectoryRespon
 	};
 }
 
+// Convenience helper to read the role stored in localStorage.
 function currentUserRole(): User['role'] | null {
 	if (typeof window === 'undefined') return null;
 	try {
@@ -297,6 +312,7 @@ type GetUsersOptions = {
 	scope?: 'all' | 'others';
 };
 
+// Encapsulates REST calls with strongly typed helpers.
 class APIService {
 	// Authentication
 	async login(email: string, password: string): Promise<AuthUser> {

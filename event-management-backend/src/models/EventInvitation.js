@@ -1,3 +1,4 @@
+// Tracks invitations sent to users to collaborate or attend specific events.
 import mongoose from 'mongoose';
 
 const eventInvitationSchema = new mongoose.Schema({

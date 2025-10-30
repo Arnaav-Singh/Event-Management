@@ -1,3 +1,4 @@
+// Controllers orchestrating the event lifecycle: creation, assignment, invitations, and reporting.
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import Event from '../models/Event.js';
@@ -6,8 +7,9 @@ import Feedback from '../models/Feedback.js';
 import User from '../models/User.js';
 import { sendEmail } from '../services/emailService.js';
 
-const allowedStatuses = ['draft', 'scheduled', 'ongoing', 'completed'];
+const allowedStatuses = ['draft', 'scheduled', 'ongoing', 'completed']; // canonical status transitions
 
+// Lightweight guard to avoid casting invalid ids into queries.
 const isObjectId = (value) => {
   if (!value) return false;
   try {
@@ -17,6 +19,7 @@ const isObjectId = (value) => {
   }
 };
 
+// Deduplicate and cast arrays of ids provided by clients.
 const normalizeObjectIdArray = (values = []) => {
   const unique = new Set();
   const normalized = [];
@@ -30,12 +33,14 @@ const normalizeObjectIdArray = (values = []) => {
   return normalized;
 };
 
+// Determines whether the user has sufficient privileges to mutate an event.
 const canManageEvent = (event, user) => {
   if (!event || !user) return false;
   if (['dean', 'superadmin'].includes(user.role)) return true;
   return event.coordinators?.some((coordId) => coordId.toString() === user._id.toString());
 };
 
+// Reply with 403 if the caller lacks management rights.
 const ensureManageAccess = (event, user, res) => {
   if (!canManageEvent(event, user)) {
     res.status(403).json({ message: 'Not authorized to manage this event' });
@@ -46,6 +51,7 @@ const ensureManageAccess = (event, user, res) => {
 
 const mapStatus = (status) => (allowedStatuses.includes(status) ? status : undefined);
 
+// Accept both comma-delimited strings and arrays for tag-like fields.
 const normaliseStringArray = (input) => {
   if (!input) return [];
   if (Array.isArray(input)) {
@@ -57,6 +63,7 @@ const normaliseStringArray = (input) => {
   return [];
 };
 
+// Standardise agenda entries while stripping empty placeholders.
 const normaliseAgenda = (agenda) => {
   if (!Array.isArray(agenda)) return [];
   return agenda
@@ -70,6 +77,7 @@ const normaliseAgenda = (agenda) => {
     }));
 };
 
+// Guard against malformed coordinator contact inputs.
 const normaliseContacts = (contacts) => {
   if (!Array.isArray(contacts)) return [];
   return contacts
@@ -82,6 +90,7 @@ const normaliseContacts = (contacts) => {
     }));
 };
 
+// Return events with optional filtering by school/department/status.
 export const getAllEvents = async (req, res) => {
   try {
     const { school, department, status } = req.query || {};
@@ -100,6 +109,7 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
+// Fetch a single event with related participants.
 export const getEventById = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -117,6 +127,7 @@ export const getEventById = async (req, res) => {
   }
 };
 
+// Create a new event record and seed coordinator invitations.
 export const createEvent = async (req, res) => {
   try {
     const {
@@ -233,6 +244,7 @@ export const createEvent = async (req, res) => {
   }
 };
 
+// Apply updates to mutable fields and keep derived state in sync.
 export const updateEvent = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -353,6 +365,7 @@ export const updateEvent = async (req, res) => {
   }
 };
 
+// Remove an event along with its invitation side effects.
 export const deleteEvent = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -372,6 +385,7 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
+// Append coordinators to an event and ensure they have invitations.
 export const assignCoordinators = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -416,6 +430,7 @@ export const assignCoordinators = async (req, res) => {
   }
 };
 
+// Invite attendees or coordinators explicitly and email them the details.
 export const inviteParticipants = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -512,6 +527,7 @@ export const inviteParticipants = async (req, res) => {
   }
 };
 
+// Provide a full list of invitations for an event managers can review.
 export const listEventInvitations = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -531,6 +547,7 @@ export const listEventInvitations = async (req, res) => {
   }
 };
 
+// Allow privileged roles to approve or reject an event.
 export const updateEventApproval = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -572,6 +589,7 @@ export const updateEventApproval = async (req, res) => {
   }
 };
 
+// Let a user see invitations sent to them.
 export const getMyInvitations = async (req, res) => {
   try {
     const invitations = await EventInvitation.find({ invitee: req.user._id })
@@ -583,6 +601,7 @@ export const getMyInvitations = async (req, res) => {
   }
 };
 
+// Accept or decline a specific event invitation.
 export const respondToInvitation = async (req, res) => {
   try {
     if (!isObjectId(req.params.invitationId)) {
@@ -626,6 +645,7 @@ export const respondToInvitation = async (req, res) => {
   }
 };
 
+// Issue a short-lived attendance code that participants can scan.
 export const generateAttendanceCode = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -650,6 +670,7 @@ export const generateAttendanceCode = async (req, res) => {
   }
 };
 
+// Validate an attendance code and register the participant's presence.
 export const checkInWithCode = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -698,6 +719,7 @@ export const checkInWithCode = async (req, res) => {
   }
 };
 
+// Compile post-event metrics, notify deans, and mark the event as complete.
 export const finalizeEvent = async (req, res) => {
   try {
     if (!isObjectId(req.params.id)) {
@@ -785,6 +807,7 @@ export const finalizeEvent = async (req, res) => {
   }
 };
 
+// Surface aggregate counts used by the admin dashboard.
 export const getAdminStats = async (_req, res) => {
   try {
     const totalEvents = await Event.countDocuments();
@@ -803,6 +826,7 @@ export const getAdminStats = async (_req, res) => {
   }
 };
 
+// Provide coordinators with a snapshot of their event performance.
 export const getCoordinatorStats = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -815,6 +839,7 @@ export const getCoordinatorStats = async (req, res) => {
   }
 };
 
+// Supply superadmins with high-level adoption figures.
 export const getSuperadminOverview = async (_req, res) => {
   try {
     const [pendingApprovals, rejectedApprovals, upcomingApproved] = await Promise.all([

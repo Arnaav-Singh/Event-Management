@@ -1,3 +1,4 @@
+// Routes reserved for dean/superadmin operators.
 import express from 'express';
 import { getAllUsers, deleteUser, getAllEvents, deleteEvent, getAllFeedback, createSuperAdmin, bulkCreateCoordinators, assignEventToCoordinator } from '../controllers/superadminController.js';
 import { getSuperadminOverview } from '../controllers/eventController.js';
@@ -6,7 +7,7 @@ import roleMiddleware from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
-const deanRoles = ['dean', 'superadmin'];
+const deanRoles = ['dean', 'superadmin']; // both roles share the same permissions for this router
 
 // All routes require dean-level access
 router.get('/users', authMiddleware, roleMiddleware(deanRoles), getAllUsers);

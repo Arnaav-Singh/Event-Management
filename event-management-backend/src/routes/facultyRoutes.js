@@ -1,3 +1,4 @@
+// Faculty directory management routes shared by coordinators and deans.
 import express from 'express';
 const router = express.Router();
 import { getAllFaculty, inviteFaculty, deleteFaculty } from '../controllers/facultyController.js';

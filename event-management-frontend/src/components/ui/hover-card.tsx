@@ -1,3 +1,4 @@
+// UI primitive for Hover Card built on shadcn/ui library.
 import * as React from "react"
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
 

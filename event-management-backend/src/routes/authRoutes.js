@@ -1,3 +1,4 @@
+// Authentication and session management endpoints.
 import express from 'express';
 const router = express.Router();
 import { register, login, getProfile } from '../controllers/authController.js';

@@ -1,6 +1,8 @@
+// Student-centric endpoints covering registration, attendance, and personal event lists.
 import Event from '../models/Event.js';
 import EventInvitation from '../models/EventInvitation.js';
 
+// Enrol the authenticated student into an event, honouring invitation rules.
 export const registerForEvent = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -40,6 +42,7 @@ export const registerForEvent = async (req, res) => {
   }
 };
 
+// List events that the student is currently registered to attend.
 export const getMyEvents = async (req, res) => {
   try {
     const events = await Event.find({ attendees: req.user._id });
@@ -49,6 +52,7 @@ export const getMyEvents = async (req, res) => {
   }
 };
 
+// Mark attendance for the student, ensuring they were previously registered.
 export const markAttendance = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -75,6 +79,7 @@ export const markAttendance = async (req, res) => {
   }
 };
 
+// Provide an attendance roster visible to authorised viewers.
 export const listAttendance = async (req, res) => {
   try {
     const event = await Event.findById(req.params.id).populate('attendance', 'name email');

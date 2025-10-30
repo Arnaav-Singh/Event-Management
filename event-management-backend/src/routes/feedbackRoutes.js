@@ -1,3 +1,4 @@
+// Feedback submission/retrieval interfaces.
 import express from 'express';
 const router = express.Router();
 import { submitFeedback, getFeedbackForEvent } from '../controllers/feedbackController.js';

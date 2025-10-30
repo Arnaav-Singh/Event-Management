@@ -1,3 +1,4 @@
+// ESLint configuration tuned for the Vite + React + TypeScript stack.
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";

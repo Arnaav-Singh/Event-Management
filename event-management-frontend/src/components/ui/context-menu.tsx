@@ -1,3 +1,4 @@
+// UI primitive for Context Menu built on shadcn/ui library.
 import * as React from "react"
 import * as ContextMenuPrimitive from "@radix-ui/react-context-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"

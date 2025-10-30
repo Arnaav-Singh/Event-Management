@@ -1,3 +1,4 @@
+// UI primitive for Scroll Area built on shadcn/ui library.
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
 

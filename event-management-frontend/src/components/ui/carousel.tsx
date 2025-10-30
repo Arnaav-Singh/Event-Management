@@ -1,3 +1,4 @@
+// UI primitive for Carousel built on shadcn/ui library.
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,

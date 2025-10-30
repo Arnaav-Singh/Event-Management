@@ -1,3 +1,4 @@
+// Utility script to bootstrap a dean/super admin account into a fresh database.
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import dotenv from 'dotenv';

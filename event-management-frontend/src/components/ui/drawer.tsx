@@ -1,3 +1,4 @@
+// UI primitive for Drawer built on shadcn/ui library.
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 

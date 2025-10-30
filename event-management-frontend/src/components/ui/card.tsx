@@ -1,3 +1,4 @@
+// UI primitive for Card built on shadcn/ui library.
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

@@ -1,3 +1,4 @@
+// UI primitive for Chart built on shadcn/ui library.
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 

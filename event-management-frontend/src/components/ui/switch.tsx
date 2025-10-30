@@ -1,3 +1,4 @@
+// UI primitive for Switch built on shadcn/ui library.
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
 

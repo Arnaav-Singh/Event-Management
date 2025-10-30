@@ -1,3 +1,4 @@
+// Facilitates QR code generation for Google Form links tied to events.
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export function GoogleFormQRGenerator({
   const [isValidUrl, setIsValidUrl] = useState(false);
   const { toast } = useToast();
 
+  // Build a data URI for the QR code so it can be rendered or downloaded.
   const generateQRCode = useCallback(async (url: string) => {
     if (!url || !isValidGoogleFormUrl(url)) return;
     

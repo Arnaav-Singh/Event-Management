@@ -1,3 +1,4 @@
+// UI primitive for Tooltip built on shadcn/ui library.
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 

@@ -1,3 +1,4 @@
+// Coordinator dashboard for managing events, attendance, and invitations.
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
 import { EventCard } from '@/components/EventCard';
@@ -87,6 +88,7 @@ export default function CoordinatorDashboard() {
   const manualEmailCount = useMemo(() => inviteEmails.split(/[\n,;]+/).map((email) => email.trim()).filter(Boolean).length, [inviteEmails]);
   const pendingInviteCount = selectedDirectoryList.length + manualEmailCount;
 
+  // Fetch assigned events and high-level stats for the current coordinator.
   const loadData = useCallback(async () => {
     if (!user) return;
     
@@ -123,16 +125,19 @@ export default function CoordinatorDashboard() {
     });
   }, [user?.school, createDialogOpen]);
 
+  // Open the QR modal for attendance check-ins.
   const handleGenerateQR = (event: Event) => {
     setSelectedEvent(event);
     setShowQRDialog(true);
   };
 
+  // Launch the Google Form QR modal so feedback links can be distributed.
   const handleGenerateGoogleFormQR = (event: Event) => {
     setSelectedEvent(event);
     setShowGoogleFormQRDialog(true);
   };
 
+  // Pull attendance from the API before showing the roster.
   const handleViewAttendance = async (event: Event) => {
     setSelectedEvent(event);
     try {
@@ -146,6 +151,7 @@ export default function CoordinatorDashboard() {
     }
   };
 
+  // Fetch directory records grouped by school for bulk invitations.
   const loadDirectoryData = useCallback(async (role: DirectoryRole) => {
     setDirectoryLoading(true);
     try {
@@ -165,6 +171,7 @@ export default function CoordinatorDashboard() {
     }
   }, [toast]);
 
+  // Reset selections when toggling between student/coordinator directories.
   const handleDirectoryRoleChange = useCallback(async (role: DirectoryRole) => {
     setDirectoryRole(role);
     setSelectedDirectoryMembers({});
@@ -174,6 +181,7 @@ export default function CoordinatorDashboard() {
     }
   }, [directoryData, loadDirectoryData]);
 
+  // Prepare the invitation dialog with existing invite summaries.
   const openInviteDialog = async (event: Event) => {
     setInviteEvent(event);
     setInviteEmails('');
@@ -196,6 +204,7 @@ export default function CoordinatorDashboard() {
     }
   };
 
+  // Send invitations to a mix of directory selections and manual emails.
   const handleSendInvites = async () => {
     if (!inviteEvent) return;
     const emails = inviteEmails.split(/[\n,;]+/).map((email) => email.trim()).filter(Boolean);
@@ -260,6 +269,7 @@ export default function CoordinatorDashboard() {
     }
   };
 
+  // Bulk-select whole departments at once when inviting.
   const addDepartmentMembers = useCallback((members: DirectoryMember[]) => {
     setSelectedDirectoryMembers((prev) => {
       const next = { ...prev } as Record<string, DirectoryMember>;
@@ -272,6 +282,7 @@ export default function CoordinatorDashboard() {
     });
   }, []);
 
+  // Remove individuals from the invite staging list.
   const removeSelectedMember = useCallback((id: string) => {
     setSelectedDirectoryMembers((prev) => {
       if (!(id in prev)) return prev;
@@ -281,6 +292,7 @@ export default function CoordinatorDashboard() {
     });
   }, []);
 
+  // Normalise controlled form inputs for the event creation drawer.
   const handleCreateFormChange = useCallback((field: keyof CoordinatorEventForm, value: string | boolean) => {
     setCreateForm((prev) => {
       if (field === 'school' && typeof value === 'string') {
@@ -304,6 +316,7 @@ export default function CoordinatorDashboard() {
     });
   }, []);
 
+  // Persist a new event draft and refresh the coordinator's assignments.
   const handleCreateEvent = useCallback(async () => {
     if (!createForm.title.trim() || !createForm.date || !createForm.time || !createForm.location.trim()) {
       toast({

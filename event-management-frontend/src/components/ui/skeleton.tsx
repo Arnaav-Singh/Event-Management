@@ -1,3 +1,4 @@
+// UI primitive for Skeleton built on shadcn/ui library.
 import { cn } from "@/lib/utils"
 
 function Skeleton({

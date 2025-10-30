@@ -1,3 +1,4 @@
+// Coordinator scoped endpoints for managing personal events.
 import express from 'express';
 const router = express.Router();
 import { createEvent, updateEvent, deleteEvent, getDirectory } from '../controllers/coordinatorController.js';

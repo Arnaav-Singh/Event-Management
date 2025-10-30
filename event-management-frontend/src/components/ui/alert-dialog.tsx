@@ -1,3 +1,4 @@
+// UI primitive for Alert Dialog built on shadcn/ui library.
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 

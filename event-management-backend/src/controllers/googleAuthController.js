@@ -1,9 +1,11 @@
+// Handles Google OAuth sign-in by verifying ID tokens and mapping to portal users.
 import User from '../models/User.js';
 import generateToken from '../utils/generateToken.js';
 import { OAuth2Client } from 'google-auth-library';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+// Exchange a Google ID token for a local JWT session.
 export const googleLogin = async (req, res) => {
   const { tokenId } = req.body;
   try {

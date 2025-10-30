@@ -1,3 +1,4 @@
+// Registration experience with role-based metadata capture.
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,6 +54,7 @@ export default function SignUp() {
     }
   }, [branchOptions, formData.department]);
 
+  // Perform validation before delegating to AuthContext.register.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -113,6 +115,7 @@ export default function SignUp() {
     }
   };
 
+  // Keep form state in sync and reset dependent selects when needed.
   const handleInputChange = (field: keyof SignUpFormState, value: string) => {
     setFormData((prev) => {
       if (field === 'school') {

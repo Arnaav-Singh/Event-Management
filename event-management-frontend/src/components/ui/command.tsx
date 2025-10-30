@@ -1,3 +1,4 @@
+// UI primitive for Command built on shadcn/ui library.
 import * as React from "react"
 import { type DialogProps } from "@radix-ui/react-dialog"
 import { Command as CommandPrimitive } from "cmdk"

@@ -1,3 +1,4 @@
+// Compact event summary card with coordinator action shortcuts.
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,7 @@ interface EventCardProps {
 export function EventCard({ event, onViewDetails, onGenerateQR, onGenerateGoogleFormQR, onViewAttendance, onManageInvites }: EventCardProps) {
   const { user } = useAuth();
   
+  // Present event dates in a readable multi-part format.
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'short',

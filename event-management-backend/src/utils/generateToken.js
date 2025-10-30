@@ -1,3 +1,4 @@
+// Creates signed JWT access tokens encoding the user identity and role.
 import jwt from 'jsonwebtoken';
 
 const generateToken = (userId, role) => {

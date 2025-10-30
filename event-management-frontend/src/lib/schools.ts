@@ -1,3 +1,4 @@
+// Hard-coded school/branch taxonomy used for form selection.
 export interface SchoolBranch {
   school: string;
   branches: string[];
@@ -47,11 +48,13 @@ export const SCHOOL_BRANCHES: SchoolBranch[] = [
 
 export const DEFAULT_SCHOOL = SCHOOL_BRANCHES[0]?.school ?? '';
 
+// Return branch options to populate select menus.
 export function getBranchesForSchool(school: string): string[] {
   const match = SCHOOL_BRANCHES.find((entry) => entry.school === school);
   return match ? match.branches : [];
 }
 
+// Quickly list every school configured in the catalog.
 export function getAllSchools(): string[] {
   return SCHOOL_BRANCHES.map((entry) => entry.school);
 }

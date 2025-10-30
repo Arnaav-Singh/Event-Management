@@ -1,3 +1,4 @@
+// Generates short-lived attendance QR codes for event check-ins.
 import { useState, useEffect, useCallback } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ export function QRCodeGenerator({ eventId, eventTitle }: QRCodeGeneratorProps) {
   const [code, setCode] = useState<string>('');
   const { toast } = useToast();
 
+  // Request a fresh attendance code and render it to a QR image.
   const generateQRCode = useCallback(async () => {
     setLoading(true);
     try {

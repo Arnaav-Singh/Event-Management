@@ -1,3 +1,4 @@
+// UI primitive for Navigation Menu built on shadcn/ui library.
 import * as React from "react"
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu"
 import { cva } from "class-variance-authority"

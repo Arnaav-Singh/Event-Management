@@ -1,6 +1,8 @@
+// Manage the faculty directory leveraged by the events workflow.
 import Faculty from '../models/Faculty.js';
 import User from '../models/User.js';
 
+// List all faculty members stored in the directory.
 export const getAllFaculty = async (req, res) => {
   try {
     const faculty = await Faculty.find();
@@ -10,6 +12,7 @@ export const getAllFaculty = async (req, res) => {
   }
 };
 
+// Add a faculty entry if one does not already exist for the email.
 export const inviteFaculty = async (req, res) => {
   try {
     const { name, designation, department, email } = req.body;
@@ -22,6 +25,7 @@ export const inviteFaculty = async (req, res) => {
   }
 };
 
+// Remove an outdated faculty record.
 export const deleteFaculty = async (req, res) => {
   try {
     const faculty = await Faculty.findByIdAndDelete(req.params.id);

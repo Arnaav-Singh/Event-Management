@@ -1,3 +1,4 @@
+// UI primitive for Input built on shadcn/ui library.
 import * as React from "react"
 
 import { cn } from "@/lib/utils"

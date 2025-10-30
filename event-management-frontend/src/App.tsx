@@ -1,3 +1,4 @@
+// Application shell that wires providers and route-level guards.
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,8 +12,9 @@ import StudentDashboard from "./pages/StudentDashboard";
 import DeanDashboard from "./pages/DeanDashboard";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient(); // shared react-query cache for API calls
 
+// Gate a route behind authentication and show a loading state while resolving.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   
@@ -27,6 +29,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Route authenticated users to the correct dashboard for their role.
 function DashboardRouter() {
   const { user } = useAuth();
   

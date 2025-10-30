@@ -1,4 +1,4 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+// Placeholder landing screen; real users are redirected via App routing.
 
 const Index = () => {
   return (

@@ -1,3 +1,4 @@
+// UI primitive for Badge built on shadcn/ui library.
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

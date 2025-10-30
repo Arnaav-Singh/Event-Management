@@ -1,3 +1,4 @@
+// UI primitive for Calendar built on shadcn/ui library.
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";

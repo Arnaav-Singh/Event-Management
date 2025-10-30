@@ -1,3 +1,4 @@
+// Toast management hook adapted from shadcn/ui with project-specific defaults.
 import * as React from "react"
 
 import type {

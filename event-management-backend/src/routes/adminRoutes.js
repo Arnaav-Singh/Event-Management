@@ -1,3 +1,4 @@
+// Administrative API endpoints requiring dean-level privileges.
 import express from 'express';
 const router = express.Router();
 import { getUsers, createUser, deleteUser, getAllEvents } from '../controllers/adminController.js';

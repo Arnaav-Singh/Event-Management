@@ -1,3 +1,4 @@
+// Maintains contact info for faculty members referenced across the portal.
 import mongoose from 'mongoose';
 
 

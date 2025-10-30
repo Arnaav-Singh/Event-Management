@@ -1,3 +1,4 @@
+// Core user profile model including role-based access metadata and password helpers.
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 

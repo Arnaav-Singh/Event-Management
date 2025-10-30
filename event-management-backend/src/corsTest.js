@@ -20,6 +20,7 @@ app.use(cors({
   credentials: true,
 }));
 
+// Simple endpoint to verify the browser can hit the server under the configured CORS policy.
 app.get("/test", (req, res) => {
   res.json({ message: "CORS test successful" });
 });

@@ -1,3 +1,4 @@
+// Dean/superadmin command center for approvals, user management, and reporting.
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout } from '@/components/Layout';
 import {
@@ -176,6 +177,7 @@ export default function DeanDashboard() {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  // Restore the new user form to its default state.
   const resetNewUser = () => {
     const branches = getBranchesForSchool(DEFAULT_SCHOOL);
     const normalizedBranches = branches.length > 0 ? branches : ['General'];
@@ -191,6 +193,7 @@ export default function DeanDashboard() {
     });
   };
 
+  // Clear the event creation form when dialogs close.
   const resetNewEvent = () => {
     const branches = getBranchesForSchool(DEFAULT_SCHOOL);
     const normalizedBranches = branches.length > 0 ? branches : ['General'];
@@ -215,6 +218,7 @@ export default function DeanDashboard() {
     });
   };
 
+  // Update branch options when the user selects a different school.
   const handleNewUserSchoolChange = (school: string) => {
     const branches = getBranchesForSchool(school);
     const normalizedBranches = branches.length > 0 ? branches : ['General'];
@@ -226,6 +230,7 @@ export default function DeanDashboard() {
     }));
   };
 
+  // Keep event branch selections aligned with the chosen school.
   const handleNewEventSchoolChange = (school: string) => {
     const branches = getBranchesForSchool(school);
     const normalizedBranches = branches.length > 0 ? branches : ['General'];
@@ -237,6 +242,7 @@ export default function DeanDashboard() {
     }));
   };
 
+  // Load user listings with current filters applied.
   const fetchUsers = useCallback(async () => {
     setIsUsersLoading(true);
     try {
@@ -245,10 +251,10 @@ export default function DeanDashboard() {
 
       if (userSchoolFilter === 'all') {
         params.scope = 'all';
-      } else if (userSchoolFilter !== 'others') {
+      } else if (userSchoolFilter === 'others') {
+        params.scope = currentUser?.school ? 'others' : 'all';
+      } else {
         params.school = userSchoolFilter;
-      } else if (!currentUser?.school) {
-        params.scope = 'all';
       }
 
       if (trimmedSearch.length > 0) {
@@ -268,6 +274,7 @@ export default function DeanDashboard() {
     }
   }, [userSchoolFilter, userSearchTerm, toast, currentUser?.school]);
 
+  // Gather dashboard metrics, event lists, and invitation summaries.
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -318,6 +325,7 @@ export default function DeanDashboard() {
     fetchUsers();
   }, [fetchUsers]);
 
+  // Create dean/coordinator/student accounts and refresh listings.
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -346,6 +354,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Submit a dean-authored event and reset form inputs.
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEvent.date) {
@@ -405,6 +414,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Track delete dialog visibility and reset transient state.
   const handleDeleteDialogOpenChange = (open: boolean) => {
     if (!open) {
       setDeleteDialog({ open: false, user: null });
@@ -413,6 +423,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Confirm destructive user deletions with password re-entry.
   const handleDeleteUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!deleteDialog.user) return;
@@ -445,17 +456,20 @@ export default function DeanDashboard() {
     }
   };
 
+  // Launch the approval modal for the selected event.
   const openApprovalDialog = (event: Event, decision: 'approved' | 'rejected') => {
     setApprovalDialog({ open: true, decision, event });
     setApprovalNotes('');
   };
 
+  // Clear approval dialog state without persisting changes.
   const closeApprovalDialog = () => {
     setApprovalDialog({ open: false, decision: 'approved', event: null });
     setApprovalNotes('');
     setApprovalLoading(false);
   };
 
+  // Approve or reject an event, persisting optional notes.
   const handleSubmitApproval = async () => {
     if (!approvalDialog.event) return;
     setApprovalLoading(true);
@@ -487,6 +501,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Remove an event from the system after dean confirmation.
   const handleDeleteEvent = async (eventId: string) => {
     if (!confirm('Are you sure you want to remove this event?')) return;
     try {
@@ -505,6 +520,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Finalise an event, trigger report emails, and update metrics.
   const handleFinalizeEvent = async () => {
     if (!finalizeEventTarget) return;
     setFinalizeLoading(true);
@@ -530,6 +546,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Retrieve detailed invitation stats when inspecting an event.
   const handleViewEvent = async (event: Event) => {
     setDetailEvent(event);
     try {
@@ -540,6 +557,7 @@ export default function DeanDashboard() {
     }
   };
 
+  // Format timestamps for readability inside tables and cards.
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd MMM yyyy, hh:mm a');

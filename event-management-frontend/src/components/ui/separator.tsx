@@ -1,3 +1,4 @@
+// UI primitive for Separator built on shadcn/ui library.
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 

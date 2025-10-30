@@ -1,13 +1,15 @@
+// High-level administrative controls for deans and superadmins.
 import User from '../models/User.js';
 import Event from '../models/Event.js';
 import Feedback from '../models/Feedback.js';
 import mongoose from 'mongoose';
 import EventInvitation from '../models/EventInvitation.js';
 
-// Get all users
+// Search and filter across the user directory with dean scoping rules applied.
 export const getAllUsers = async (req, res) => {
   try {
     const { role, roles, school, department, search, scope } = req.query || {};
+    const normalizedScope = typeof scope === 'string' ? scope.trim().toLowerCase() : undefined;
 
     const normalizedRole = typeof role === 'string' ? role.trim().toLowerCase() : undefined;
     const roleListArray = Array.isArray(roles)
@@ -39,8 +41,10 @@ export const getAllUsers = async (req, res) => {
 
       if (school) {
         filters.school = school;
-      } else if (scope !== 'all' && req.user.school) {
+      } else if (normalizedScope === 'others' && req.user.school) {
         filters.school = { $ne: req.user.school };
+      } else if (normalizedScope !== 'all' && req.user.school) {
+        filters.school = req.user.school;
       }
     } else {
       if (roleList.length) {
@@ -80,7 +84,7 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-// Delete any user
+// Allow privileged roles to remove an account after password confirmation.
 export const deleteUser = async (req, res) => {
   try {
     const { password } = req.body || {};
@@ -116,7 +120,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// Get all events
+// Give superadmins a filtered view of every event in the system.
 export const getAllEvents = async (req, res) => {
   try {
     const filter = {};
@@ -135,7 +139,7 @@ export const getAllEvents = async (req, res) => {
   }
 };
 
-// Delete any event
+// Hard delete an event when governance requires it.
 export const deleteEvent = async (req, res) => {
   try {
     const event = await Event.findByIdAndDelete(req.params.id);
@@ -146,7 +150,7 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
-// Get all feedback
+// Review feedback system-wide or by specific event.
 export const getAllFeedback = async (req, res) => {
   try {
     const filter = {};
@@ -162,7 +166,7 @@ export const getAllFeedback = async (req, res) => {
   }
 };
 
-// Create a dean user
+// Add a new dean-level operator to the platform.
 export const createSuperAdmin = async (req, res) => {
   try {
     const { name, email, password, school, department, designation } = req.body;
@@ -191,7 +195,7 @@ export const createSuperAdmin = async (req, res) => {
   }
 };
 
-// Bulk create coordinators from provided array
+// Quickly seed multiple coordinator accounts from a payload.
 export const bulkCreateCoordinators = async (req, res) => {
   try {
     const { coordinators } = req.body; // [{name,email,password,school,department}]
@@ -211,7 +215,7 @@ export const bulkCreateCoordinators = async (req, res) => {
   }
 };
 
-// Assign an event to a coordinator
+// Attach a coordinator to an event and ensure an invitation is issued.
 export const assignEventToCoordinator = async (req, res) => {
   try {
     const { coordinatorId } = req.body;
